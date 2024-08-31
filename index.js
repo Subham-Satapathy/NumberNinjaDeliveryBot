@@ -4,7 +4,6 @@ require('dotenv').config();
 const TOKEN = process.env.TELEGRAM_TOKEN;
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 
-
 // Create a bot that uses polling
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -19,7 +18,7 @@ bot.onText(/\/start/, (msg) => {
   const userFirstName = msg.from.first_name;
   const welcomeMessage = `Hello ${userFirstName}, welcome to the bot!`;
 
-  bot.sendMessage(chatId, welcomeMessage, options);
+  bot.sendMessage(chatId, welcomeMessage);
 });
 
 // Command /reply handler
@@ -40,6 +39,7 @@ bot.on('message', (msg) => {
   const userId = msg.from.id;
   const userName = msg.from.first_name;
 
+  // Skip sending confirmation if the message is from the admin
   if (chatId.toString() === ADMIN_CHAT_ID) {
     if (adminState[chatId] && adminState[chatId].waitingForUserId) {
       // Admin is in the state of waiting for user ID
@@ -69,13 +69,17 @@ bot.on('message', (msg) => {
   } else {
     // Forward message to admin including chat ID formatted for easy copying
     const forwardMessage = `Message from ${userName} (${userId}):\n${userMessage}\n\nChat ID: <code>${chatId}</code>`;
+    
+    // Forward the message to the admin and send a confirmation to the user
     bot.sendMessage(ADMIN_CHAT_ID, forwardMessage, { parse_mode: 'HTML' })
+      .then(() => {
+        bot.sendMessage(chatId, 'Your message has been received. We\'ll get back to you soon.');
+      })
       .catch(error => console.error('Error forwarding message:', error));
-    bot.sendMessage(chatId, 'Your message has been received. We\'ll get back to you soon.')
-      .catch(error => console.error('Error sending confirmation message:', error));
   }
 });
 
+// Handle polling errors
 bot.on('polling_error', (error) => {
   console.error('Polling error:', error);
   
@@ -84,4 +88,3 @@ bot.on('polling_error', (error) => {
     console.log('Handled an ETELEGRAM error.');
   }
 });
-
