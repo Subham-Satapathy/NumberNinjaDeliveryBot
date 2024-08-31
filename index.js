@@ -76,7 +76,12 @@ bot.on('message', (msg) => {
   }
 });
 
-// Handle errors
 bot.on('polling_error', (error) => {
-  console.error('Polling error:', error.code);
+  console.error('Polling error:', error);
+  
+  // Optionally, you can filter out certain known errors
+  if (error.code === 'ETELEGRAM') {
+    console.log('Handled an ETELEGRAM error.');
+  }
 });
+
